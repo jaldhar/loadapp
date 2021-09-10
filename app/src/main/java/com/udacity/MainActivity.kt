@@ -30,14 +30,68 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 
-        custom_button.setOnClickListener {
-            download()
+        contentMainBinding.customButton.setOnClickListener { it as LoadingButton
+            if (!it.isLoading()) {
+                download()
+            }
         }
     }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            downloadID = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)!!
+            if (downloadID == -1L) {
+                return
+            }
+
+            val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            val cursor = downloadManager.query(DownloadManager.Query().setFilterById(downloadID))
+
+            if (cursor.moveToFirst()) {
+                contentMainBinding.customButton.setState(ButtonState.Loading)
+                sendNotification(getString(R.string.notification_description), applicationContext)
+                when (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+                    DownloadManager.STATUS_SUCCESSFUL -> {
+                        val uri: String =
+                           cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+                        Toast.makeText(
+                            context,
+                            resources.getString(R.string.notification_description),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        // val file = File(URLUtil.guessFileName(uri, null, null))
+                    }
+                    DownloadManager.STATUS_FAILED -> {
+                        // download has failed
+                    }
+                    else -> {
+                    }
+                }
+            } else {
+                // download is cancelled
+            }
+
+        }
+    }
+
+    private fun createChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.app_name),
+                NotificationManager.IMPORTANCE_HIGH
+            )
+                .apply {
+                    setShowBadge(false)
+                }
+
+            notificationChannel.enableLights(true)
+            notificationChannel.lightColor = Color.RED
+            notificationChannel.enableVibration(true)
+            notificationChannel.description = getString(R.string.notification_description)
+
+            notificationManager.createNotificationChannel(notificationChannel)
+
         }
     }
 
@@ -53,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
+        contentMainBinding.customButton.setState(ButtonState.Completed)
     }
 
     companion object {
