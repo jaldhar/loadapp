@@ -1,19 +1,25 @@
 package com.udacity
 
 import android.app.DownloadManager
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.webkit.URLUtil
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.udacity.databinding.ActivityMainBinding
 import com.udacity.databinding.ContentMainBinding
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +39,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(contentMainBinding.root)
         setSupportActionBar(activityMainBinding.toolbar)
 
+        notificationManager =
+            ContextCompat.getSystemService(applicationContext, NotificationManager::class.java)
+                    as NotificationManager
+
+        createChannel()
+
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 
         contentMainBinding.customButton.setOnClickListener { it as LoadingButton
@@ -40,6 +52,11 @@ class MainActivity : AppCompatActivity() {
                 download()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(receiver)
     }
 
     private val receiver = object : BroadcastReceiver() {
@@ -108,6 +125,9 @@ class MainActivity : AppCompatActivity() {
                 .setRequiresCharging(false)
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                    URLUtil.guessFileName(URL, null, null))
 
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
@@ -115,10 +135,42 @@ class MainActivity : AppCompatActivity() {
         contentMainBinding.customButton.setState(ButtonState.Completed)
     }
 
+    private fun sendNotification(messageBody: String, applicationContext: Context) {
+        val detailIntent = Intent(applicationContext, DetailActivity::class.java)
+
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            NOTIFICATION_ID,
+            detailIntent,
+            flags
+        )
+
+        action = NotificationCompat.Action(
+            R.drawable.ic_assistant_black_24dp,
+            getString(R.string.check_status),
+            pendingIntent )
+
+        val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_assistant_black_24dp)
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(messageBody)
+            .setAutoCancel(true)
+            .addAction(action)
+
+        notificationManager.notify(NOTIFICATION_ID, builder.build())
+    }
+
     companion object {
         private const val URL =
             "https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"
         private const val CHANNEL_ID = "channelId"
+        private const val NOTIFICATION_ID = 0
     }
 
 }
