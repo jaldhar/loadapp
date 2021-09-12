@@ -30,6 +30,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationManager: NotificationManager
     private lateinit var pendingIntent: PendingIntent
     private lateinit var action: NotificationCompat.Action
+    private var url = ""
+    private var notificationDescription = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +54,30 @@ class MainActivity : AppCompatActivity() {
                 download()
             }
         }
+
+        contentMainBinding.choices.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radioGlide -> {
+                    url = GLIDE_URL
+                    notificationDescription =
+                        getString(R.string.glide_notification_description)
+                }
+                R.id.radioLoadApp -> {
+                    url = UDACITY_URL
+                    notificationDescription =
+                        getString(R.string.udacity_notification_description)
+                }
+                R.id.radioRetrofit -> {
+                    url = RETROFIT_URL
+                    notificationDescription =
+                        getString(R.string.retrofit_notification_description)
+                }
+                else -> {
+                    url = ""
+                    notificationDescription = ""
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -61,6 +87,8 @@ class MainActivity : AppCompatActivity() {
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            contentMainBinding.customButton.setState(ButtonState.Completed)
+
             downloadID = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)!!
             if (downloadID == -1L) {
                 return
@@ -70,18 +98,22 @@ class MainActivity : AppCompatActivity() {
             val cursor = downloadManager.query(DownloadManager.Query().setFilterById(downloadID))
 
             if (cursor.moveToFirst()) {
-                contentMainBinding.customButton.setState(ButtonState.Loading)
-                sendNotification(getString(R.string.notification_description), applicationContext)
-                when (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+
+                sendNotification(
+                    getString(R.string.notification_description, notificationDescription),
+                    applicationContext
+                )
+
+                val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                when (status) {
                     DownloadManager.STATUS_SUCCESSFUL -> {
-                        val uri: String =
-                           cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
                         Toast.makeText(
                             context,
-                            resources.getString(R.string.notification_description),
+                            resources.getString(R.string.notification_description, notificationDescription),
                             Toast.LENGTH_SHORT
                         ).show()
-                        // val file = File(URLUtil.guessFileName(uri, null, null))
+                        url = ""
+                        contentMainBinding.choices.clearCheck()
                     }
                     DownloadManager.STATUS_FAILED -> {
                         // download has failed
@@ -118,8 +150,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun download() {
+        val customButton = contentMainBinding.customButton
+        customButton.setState(ButtonState.Loading)
+
+        if (url == "") {
+            Toast.makeText(
+                customButton.context, "Please select the file to download",
+                Toast.LENGTH_SHORT
+            ).show()
+            customButton.setState(ButtonState.Completed)
+            return
+        }
+
         val request =
-            DownloadManager.Request(Uri.parse(URL))
+            DownloadManager.Request(Uri.parse(url))
                 .setTitle(getString(R.string.app_name))
                 .setDescription(getString(R.string.app_description))
                 .setRequiresCharging(false)
@@ -127,12 +171,11 @@ class MainActivity : AppCompatActivity() {
                 .setAllowedOverRoaming(true)
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
-                    URLUtil.guessFileName(URL, null, null))
+                    URLUtil.guessFileName(url, null, null))
 
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
-        contentMainBinding.customButton.setState(ButtonState.Completed)
     }
 
     private fun sendNotification(messageBody: String, applicationContext: Context) {
@@ -167,8 +210,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val URL =
+        private const val GLIDE_URL =
+            "https://github.com/bumptech/glide/archive/master.zip"
+        private const val UDACITY_URL =
             "https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"
+        private const val RETROFIT_URL =
+            "https://github.com/square/retrofit/archive/master.zip"
         private const val CHANNEL_ID = "channelId"
         private const val NOTIFICATION_ID = 0
     }
