@@ -19,12 +19,14 @@
         android:cropToPadding="true"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_baseline_cloud_download_24"
+        app:layout_constraintBottom_toTopOf="@+id/choices"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.49"
         app:layout_constraintVertical_chainStyle="spread_inside"
         tools:srcCompat="@drawable/ic_baseline_cloud_download_24" />
-
 
 
     <RadioGroup
@@ -33,10 +35,11 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/fullmargin"
         android:layout_marginEnd="@dimen/fullmargin"
-        app:layout_constraintBottom_toTopOf="@id/custom_button"
+        app:layout_constraintBottom_toTopOf="@+id/custom_button"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/logo">
+        app:layout_constraintTop_toBottomOf="@+id/logo">
 
         <RadioButton
             android:id="@+id/radioGlide"
@@ -64,17 +67,18 @@
         android:id="@+id/custom_button"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        app:foregroundColor="@color/colorPrimaryDark"
-        app:backgroundColor="@color/colorPrimary"
-        app:circleColor="@color/colorAccent"
-        app:textColor="@color/white"
-        app:text="@string/button_name"
         android:layout_marginStart="@dimen/fullmargin"
         android:layout_marginEnd="@dimen/fullmargin"
+        android:layout_marginBottom="@dimen/fullmargin"
+        app:backgroundColor="@color/colorPrimary"
+        app:circleColor="@color/colorAccent"
+        app:foregroundColor="@color/colorPrimaryDark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/choices"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/choices"
+        app:text="@string/button_name"
+        app:textColor="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
