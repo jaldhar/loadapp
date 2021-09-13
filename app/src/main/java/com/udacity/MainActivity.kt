@@ -99,11 +99,6 @@ class MainActivity : AppCompatActivity() {
 
             if (cursor.moveToFirst()) {
 
-                sendNotification(
-                    getString(R.string.notification_description, notificationDescription),
-                    applicationContext
-                )
-
                 val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
                 when (status) {
                     DownloadManager.STATUS_SUCCESSFUL -> {
@@ -112,19 +107,23 @@ class MainActivity : AppCompatActivity() {
                             resources.getString(R.string.notification_description, notificationDescription),
                             Toast.LENGTH_SHORT
                         ).show()
-                        url = ""
-                        contentMainBinding.choices.clearCheck()
                     }
                     DownloadManager.STATUS_FAILED -> {
                         // download has failed
                     }
                     else -> {
                     }
+
                 }
+                sendNotification(
+                    getString(R.string.notification_description, notificationDescription),
+                    applicationContext, status, url
+                )
+                url = ""
+                contentMainBinding.choices.clearCheck()
             } else {
                 // download is cancelled
             }
-
         }
     }
 
@@ -178,7 +177,12 @@ class MainActivity : AppCompatActivity() {
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
     }
 
-    private fun sendNotification(messageBody: String, applicationContext: Context) {
+    private fun sendNotification(
+        messageBody: String,
+        applicationContext: Context,
+        status: Int,
+        url: String
+    ) {
         val detailIntent = Intent(applicationContext, DetailActivity::class.java)
 
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -187,17 +191,29 @@ class MainActivity : AppCompatActivity() {
             PendingIntent.FLAG_UPDATE_CURRENT
         }
 
+        detailIntent.putExtra("STATUS", status)
+
+        val filename = when (url) {
+            GLIDE_URL -> getString(R.string.glide_description)
+            UDACITY_URL -> getString(R.string.loadapp_description)
+            RETROFIT_URL -> getString(R.string.retrofit_description)
+            else -> ""
+        }
+        detailIntent.putExtra("FILENAME", filename)
+
         pendingIntent = PendingIntent.getActivity(
             applicationContext,
             NOTIFICATION_ID,
             detailIntent,
             flags
-        )
+        ).apply {
+            notificationManager.cancelAll()
+        }
 
         action = NotificationCompat.Action(
             R.drawable.ic_assistant_black_24dp,
             getString(R.string.check_status),
-            pendingIntent )
+            pendingIntent)
 
         val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_assistant_black_24dp)

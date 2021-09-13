@@ -20,4 +20,6 @@
     <string name="logo_description">logo</string>
     <string name="download">Download</string>
     <string name="check_status">Check file status</string>
+    <string name="filename">Filename:</string>
+    <string name="status">Status</string>
 </resources>
