@@ -22,4 +22,6 @@
     <string name="check_status">Check file status</string>
     <string name="filename">Filename:</string>
     <string name="status">Status</string>
+    <string name="download_failure">%s failed to download</string>
+    <string name="download_cancelled">The download was cancelled</string>
 </resources>

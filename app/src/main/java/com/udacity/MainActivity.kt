@@ -108,7 +108,11 @@ class MainActivity : AppCompatActivity() {
                         ).show()
                     }
                     DownloadManager.STATUS_FAILED -> {
-                        // download has failed
+                        Toast.makeText(
+                            context,
+                            resources.getString(R.string.download_failure, notificationDescription),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     else -> {
                     }
@@ -121,7 +125,11 @@ class MainActivity : AppCompatActivity() {
                 url = ""
                 contentMainBinding.choices.clearCheck()
             } else {
-                // download is cancelled
+                Toast.makeText(
+                    context,
+                    resources.getString(R.string.download_cancelled),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
