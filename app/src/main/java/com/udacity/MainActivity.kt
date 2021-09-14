@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var activityMainBinding: ActivityMainBinding
     private lateinit var contentMainBinding: ContentMainBinding
     private lateinit var notificationManager: NotificationManager
-    private lateinit var pendingIntent: PendingIntent
     private lateinit var action: NotificationCompat.Action
     private var url = ""
     private var notificationDescription = ""
@@ -117,7 +116,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 sendNotification(
                     getString(R.string.notification_description, notificationDescription),
-                    applicationContext, status, url
+                    applicationContext, makePendingIntent(status, url)
                 )
                 url = ""
                 contentMainBinding.choices.clearCheck()
@@ -177,12 +176,7 @@ class MainActivity : AppCompatActivity() {
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
     }
 
-    private fun sendNotification(
-        messageBody: String,
-        applicationContext: Context,
-        status: Int,
-        url: String
-    ) {
+    private fun makePendingIntent(status: Int, url: String) : PendingIntent {
         val detailIntent = Intent(applicationContext, DetailActivity::class.java)
 
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -201,7 +195,7 @@ class MainActivity : AppCompatActivity() {
         }
         detailIntent.putExtra("FILENAME", filename)
 
-        pendingIntent = PendingIntent.getActivity(
+        return PendingIntent.getActivity(
             applicationContext,
             NOTIFICATION_ID,
             detailIntent,
@@ -210,6 +204,11 @@ class MainActivity : AppCompatActivity() {
             notificationManager.cancelAll()
         }
 
+    }
+
+    private fun sendNotification(messageBody: String, applicationContext: Context,
+        pendingIntent: PendingIntent
+    ) {
         action = NotificationCompat.Action(
             R.drawable.ic_assistant_black_24dp,
             getString(R.string.check_status),
